@@ -1,31 +1,57 @@
-# docker-compose.yml
+networks:
+  lan:
+    ipam:
+      config:
+        - subnet: 172.17.35.48/29
+          gateway: 172.17.35.49   # fp's old address — fitting owner: the host
+
 services:
   db:
     build: ./db
-    command: --bind-address=0.0.0.0        # original cnf binds the wg address; see docs
+    command: --bind-address=0.0.0.0   # image cnf binds the wg address; see docs/design-decisions.md
     environment:
-      MYSQL_DATABASE: ${MYSQL_DB}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MARIADB_DATABASE: ${MYSQL_DB}
+      MARIADB_USER: ${MYSQL_USER}
+      MARIADB_PASSWORD: ${MYSQL_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
-      retries: 10
+      timeout: 5s
+      retries: 12
+    networks:
+      lan: {ipv4_address: 172.17.35.52}
 
   app2:
     build: ./app2
+    networks:
+      lan: { ipv4_address: 172.17.35.50 }   # hardcoded bind in wsgi.py — must own .50
 
-  app1:
+  app1a: &app1
     build: ./app1
     environment:
       MYSQL_HOST: db
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DB: ${MYSQL_DB}
-      WEATHER_HOST: app2
+      WEATHER_HOST: 172.17.35.50
     depends_on:
       db: { condition: service_healthy }
       app2: { condition: service_started }
+    networks:
+      lan: { ipv4_address: 172.17.35.51 }
+
+  app1b:
+    <<: *app1
+    networks:
+      lan: { ipv4_address: 172.17.35.53 }
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - "5000:5000"
+      - "8080:80"                 # the stack's only published port
+    depends_on: [app1a, app1b]
+    networks:
+      lan: { ipv4_address: 172.17.35.54 }   # .52 stays reserved for the wg transit container (hybrid)

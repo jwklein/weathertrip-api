@@ -223,15 +223,20 @@ def reset_demo():
         ("Boston, MA",  42.360, -71.058, "America/New_York"),
         ("Denver, CO",  39.739, -104.984, "America/Denver"),
     ]
-    trips = [
-        (1, "May Cyber Conference", "2026-05-01", "2026-05-03", "Check rain and wind"),
-        (2, "Aruba",                "2026-06-10", "2026-06-17", ""),
-    ]
+
+    loc_ids = []
     for name, lat, lon, tz in locations:
         cur.execute(
             "INSERT INTO locations (name, latitude, longitude, timezone) VALUES (%s,%s,%s,%s)",
             (name, lat, lon, tz)
         )
+        loc_ids.append(cur.lastrowid)    
+
+    trips = [
+        (loc_ids[0], "May Cyber Conference", "2026-05-01", "2026-05-03", "Check rain and wind"),
+        (loc_ids[1], "Aruba",                "2026-06-10", "2026-06-17", ""),
+    ]
+
     for loc_id, title, start, end, notes in trips:
         cur.execute(
             "INSERT INTO trips (location_id, title, start_date, end_date, notes) VALUES (%s,%s,%s,%s,%s)",

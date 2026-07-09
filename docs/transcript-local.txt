@@ -1,0 +1,70 @@
+
+### seed -X POST http://localhost:8080/api/admin/reset-demo-data -H Content-Type: application/json -d {"confirm":true}
+{"locations_created":3,"status":"reset complete","trips_created":2}
+
+[HTTP 200]
+
+### locations http://localhost:8080/api/locations
+{"locations":[{"id":2,"name":"Boston, MA"},{"id":3,"name":"Denver, CO"},{"id":1,"name":"Oxford, OH"}]}
+
+[HTTP 200]
+
+### location 1 http://localhost:8080/api/locations/1
+{"id":1,"latitude":39.507,"longitude":-84.745,"name":"Oxford, OH","timezone":"America/New_York"}
+
+[HTTP 200]
+
+### 404 loc http://localhost:8080/api/locations/999
+{"error":"not found"}
+
+[HTTP 404]
+
+### create loc -X POST http://localhost:8080/api/locations -H Content-Type: application/json -d {"name":"Chicago, IL","latitude":41.88,"longitude":-87.63,"timezone":"America/Chicago"}
+{"status":"ok"}
+
+[HTTP 201]
+
+### 409 dup -X POST http://localhost:8080/api/locations -H Content-Type: application/json -d {"name":"Chicago, IL","latitude":41.88,"longitude":-87.63}
+{"status":"fail-name must be unique"}
+
+[HTTP 409]
+
+### 400 lat -X POST http://localhost:8080/api/locations -H Content-Type: application/json -d {"name":"Bad","latitude":91,"longitude":0}
+{"status":"fail-invalid latitude"}
+
+[HTTP 400]
+
+### weather http://localhost:8080/api/weather/current/1
+{"elevation":284.0,"generationtime_ms":0.06532669067382812,"hourly":{"precipitation_probability":[2,2,1,5,5,5,4,4,1,1,1,0,1,1,2,1,1,1,5,2,1,5,6,7],"temperature_2m":[22.8,22.8,22.3,22.2,22.1,21.7,22.1,21.7,22.6,23.7,25.5,26.5,27.7,28.6,28.4,29.1,29.5,29.7,30.1,29.9,29.0,27.5,26.2,25.1],"time":["2026-07-09T00:00","2026-07-09T01:00","2026-07-09T02:00","2026-07-09T03:00","2026-07-09T04:00","2026-07-09T05:00","2026-07-09T06:00","2026-07-09T07:00","2026-07-09T08:00","2026-07-09T09:00","2026-07-09T10:00","2026-07-09T11:00","2026-07-09T12:00","2026-07-09T13:00","2026-07-09T14:00","2026-07-09T15:00","2026-07-09T16:00","2026-07-09T17:00","2026-07-09T18:00","2026-07-09T19:00","2026-07-09T20:00","2026-07-09T21:00","2026-07-09T22:00","2026-07-09T23:00"],"wind_speed_10m":[6.9,7.0,5.2,9.4,5.9,1.6,4.0,1.1,11.5,10.9,11.3,12.9,13.1,13.5,13.6,14.5,13.6,10.2,12.1,8.8,6.5,2.4,6.3,12.9]},"hourly_units":{"precipitation_probability":"%","temperature_2m":"\u00b0C","time":"iso8601","wind_speed_10m":"km/h"},"latitude":39.51531,"longitude":-84.73843,"timezone":"America/New_York","timezone_abbreviation":"GMT-4","utc_offset_seconds":-14400}
+
+[HTTP 200]
+
+### trips http://localhost:8080/api/trips
+{"trips":[{"id":2,"title":"Aruba"},{"id":1,"title":"May Cyber Conference"}]}
+
+[HTTP 200]
+
+### trip 1 http://localhost:8080/api/trips/1
+{"forecast":[{"date":"2026-07-09","precipitation_probability":7,"temperature_max":30.1,"temperature_min":21.7},{"date":"2026-07-10","precipitation_probability":23,"temperature_max":30.1,"temperature_min":21.4},{"date":"2026-07-11","precipitation_probability":35,"temperature_max":26.1,"temperature_min":20.0},{"date":"2026-07-12","precipitation_probability":6,"temperature_max":27.5,"temperature_min":16.0},{"date":"2026-07-13","precipitation_probability":5,"temperature_max":28.8,"temperature_min":17.4},{"date":"2026-07-14","precipitation_probability":1,"temperature_max":29.8,"temperature_min":19.5},{"date":"2026-07-15","precipitation_probability":8,"temperature_max":29.4,"temperature_min":20.1}],"trip":{"end_date":"2026-05-03","id":1,"location":"Oxford, OH","notes":"Check rain and wind","start_date":"2026-05-01","title":"May Cyber Conference"}}
+
+[HTTP 200]
+
+### create trip -X POST http://localhost:8080/api/trips -H Content-Type: application/json -d {"location_id":1,"title":"BurbSec run","start_date":"2026-07-16","end_date":"2026-07-16"}
+{"status":"ok"}
+
+[HTTP 201]
+
+### 400 dates -X POST http://localhost:8080/api/trips -H Content-Type: application/json -d {"location_id":1,"title":"Backwards","start_date":"2026-07-20","end_date":"2026-07-10"}
+{"status":"fail-start_date must be before end_date"}
+
+[HTTP 400]
+
+### add note -X POST http://localhost:8080/api/trips/1/note -H Content-Type: application/json -d {"note":"pack rain gear","overwrite":"false"}
+{"status":"ok"}
+
+[HTTP 200]
+
+### extremes http://localhost:8080/api/locations/1/extremes?years=5
+{"extremes":{"coldest_day":{"date":"2022-12-23","value":-24.7},"hottest_day":{"date":"2022-06-14","value":34.0},"snowiest_day":{"date":"2026-01-25","value":21.56},"wettest_day":{"date":"2024-09-27","value":62.3},"windiest_day":{"date":"2024-09-27","value":99.7}},"location":"Oxford, OH","period":{"end":"2026-07-09","start":"2021-07-09"}}
+
+[HTTP 200]
